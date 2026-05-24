@@ -506,9 +506,12 @@
     </div>
 
     <!-- History table -->
-    <div class="history-header">
+   <div class="history-header">
       <div class="history-title">Evaluation History</div>
-      <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
+        <button class="btn btn-outline" id="downloadBtn">⬇ Download CSV</button>
+      </div>
     </div>
 
     <div class="table-wrap">
@@ -946,7 +949,31 @@
       }
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', loadHistory)
+   document.getElementById('downloadBtn').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#historyBody tr')
+      if (!rows.length) return
+
+      const headers = ['Date','Ticker','Price','52W High','52W Low','P/E','Book Value','P/B','PEG','EV/EBITDA','Analyst Rating','Div Yield','Tip Ranks','Morningstar','AI Summary']
+      const csv = [headers.join(',')]
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td')
+        if (!cells.length) return
+        const rowData = Array.from(cells).map(td => {
+          const text = td.innerText.replace(/"/g, '""')
+          return `"${text}"`
+        })
+        csv.push(rowData.join(','))
+      })
+
+      const blob = new Blob([csv.join('\n')], { type: 'text/csv' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = 'stock-value-sense-history.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    })
     document.getElementById('tickerInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('lookupBtn').click()
     })
