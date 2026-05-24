@@ -441,11 +441,20 @@
       border-bottom: 1px solid #e8e8e8;
       white-space: nowrap;
     }
-    .ai-section {
-      margin-bottom: 10px;
+   .ai-section {
+      margin-bottom: 0;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0d8f8;
     }
 
-    .ai-section:last-child { margin-bottom: 0; }
+    .ai-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .ai-section:first-child {
+      padding-top: 0;
+    }
 
     .ai-section-label {
       display: block;
@@ -453,7 +462,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .ai-section-label.about { color: #4a90d9; }
