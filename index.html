@@ -859,12 +859,20 @@
           return
         }
 
-       const formatted = data.summary
-          .replace(/^ABOUT:/m,     '<div class="ai-section"><span class="ai-section-label about">🏢 About</span>')
-          .replace(/^POSITIVES:/m, '</div><div class="ai-section"><span class="ai-section-label pos">✅ Positives</span>')
-          .replace(/^WATCHLIST:/m, '</div><div class="ai-section"><span class="ai-section-label watch">⚠️ Watchlist</span>')
-          + '</div>'
-        text.innerHTML = formatted
+       const raw = data.summary
+        const aboutMatch     = raw.match(/ABOUT\s*:\s*([\s\S]*?)(?=POSITIVES\s*:|$)/i)
+        const posMatch       = raw.match(/POSITIVES\s*:\s*([\s\S]*?)(?=WATCHLIST\s*:|$)/i)
+        const watchMatch     = raw.match(/WATCHLIST\s*:\s*([\s\S]*?)$/i)
+
+        if (aboutMatch && posMatch && watchMatch) {
+          text.innerHTML =
+            '<div class="ai-section"><span class="ai-section-label about">🏢 About</span>'     + aboutMatch[1].trim()  + '</div>' +
+            '<div class="ai-section"><span class="ai-section-label pos">✅ Positives</span>'   + posMatch[1].trim()    + '</div>' +
+            '<div class="ai-section"><span class="ai-section-label watch">⚠️ Watchlist</span>' + watchMatch[1].trim()  + '</div>'
+        } else {
+          // Fallback — just show plain text if sections not detected
+          text.textContent = raw
+        }
 
         await fetch('/.netlify/functions/stock-lookup', {
           method: 'POST',
