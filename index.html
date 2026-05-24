@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockValueSense V1</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      font-family: sans-serif;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 1.5rem 1.25rem;
+      background: white;
+      border: 3px solid #1a1a1a;
+      border-radius: 16px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 2px;
+      color: #1a1a1a;
+    }
+
+    .version-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      background: #1a1a1a;
+      color: white;
+      border-radius: 4px;
+      padding: 1px 6px;
+      letter-spacing: 0.08em;
+      vertical-align: middle;
+      margin-left: 6px;
+      position: relative;
+      top: -3px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .lookup-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+      align-items: flex-end;
+    }
+
+    .lookup-row input {
+      padding: 10px 14px;
+      border: 2px solid #1a1a1a;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      width: 140px;
+      letter-spacing: 0.05em;
+    }
+
+    .btn {
+      padding: 10px 22px;
+      background: #1a1a1a;
+      color: white;
+      border: 2px solid #1a1a1a;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover    { opacity: 0.8; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-outline {
+      background: white;
+      color: #1a1a1a;
+    }
+
+    .btn-ai {
+      background: #5b3fc8;
+      border-color: #5b3fc8;
+      color: white;
+    }
+
+    #statusMsg {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 1rem;
+      min-height: 18px;
+    }
+
+    /* ── Stock card ─────────────────────────────────────────── */
+    .stock-card {
+      display: none;
+      border: 2px solid #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      background: #1a1a1a;
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .card-ticker { font-size: 22px; font-weight: 700; }
+    .card-name   { font-size: 14px; color: #aaa; flex: 1; }
+    .card-date   { font-size: 12px; color: #888; }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0;
+    }
+
+    .metric {
+      padding: 14px 16px;
+      border-right: 1px solid #e8e8e8;
+      border-bottom: 1px solid #e8e8e8;
+      position: relative;
+    }
+
+    .metric:nth-child(even) { background: #fafafa; }
+
+    .metric.full-width {
+      grid-column: 1 / -1;
+      background: #fafafa;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .metric-value.green  { color: #2d7a2d; background: #eafaea; border-radius: 6px; padding: 2px 6px; display: inline-block; }
+    .metric-value.yellow { color: #8a6000; background: #fff8e0; border-radius: 6px; padding: 2px 6px; display: inline-block; }
+
+    /* ── Info popup ─────────────────────────────────────────── */
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #ccc;
+      color: #555;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .info-btn:hover { background: #4a90d9; color: white; }
+
+    .info-popup {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 100%;
+      z-index: 100;
+      background: #1a1a1a;
+      color: white;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 10px 13px;
+      border-radius: 8px;
+      width: 240px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      pointer-events: none;
+    }
+
+    .info-popup.visible { display: block; }
+
+    .info-popup strong {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    /* ── 52W Range bar ─────────────────────────────────────── */
+    .range-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .range-end-label {
+      font-size: 11px;
+      color: #888;
+      white-space: nowrap;
+      min-width: 52px;
+    }
+
+    .range-end-label.right { text-align: right; }
+
+    .range-track {
+      flex: 1;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .range-fill {
+      position: absolute;
+      left: 0;
+      height: 100%;
+      background: #4a90d9;
+      border-radius: 4px;
+    }
+
+    .range-dot {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #1a1a1a;
+      border: 2px solid white;
+      border-radius: 50%;
+      top: -3px;
+      transform: translateX(-50%);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .range-price-label {
+      position: absolute;
+      top: -22px;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a1a1a;
+      white-space: nowrap;
+    }
+
+    .range-track-wrap {
+      flex: 1;
+      padding-top: 24px;
+      position: relative;
+    }
+
+    /* ── AI Summary ─────────────────────────────────────────── */
+    .ai-trigger {
+      display: none;
+      margin-bottom: 1rem;
+    }
+
+    .ai-summary-box {
+      display: none;
+      border: 2px solid #5b3fc8;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 1rem;
+      background: #f8f5ff;
+    }
+
+    .ai-summary-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ai-summary-label  { font-size: 12px; font-weight: 700; color: #5b3fc8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .ai-summary-ticker { font-size: 12px; color: #aaa; }
+
+    .ai-summary-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .ai-loading { font-size: 13px; color: #5b3fc8; font-style: italic; }
+
+    /* ── Manual ratings ─────────────────────────────────────── */
+    .manual-section {
+      display: none;
+      border: 2px solid #4a90d9;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 1rem;
+      background: #f5f9ff;
+    }
+
+    .manual-section h3 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a1a;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .manual-fields {
+      display: flex;
+      gap: 20px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .manual-field { display: flex; flex-direction: column; gap: 4px; }
+
+    .manual-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .manual-field input {
+      padding: 9px 12px;
+      border: 2px solid #4a90d9;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      width: 100px;
+      text-align: center;
+    }
+
+    .manual-field .hint { font-size: 10px; color: #888; }
+
+    .manual-preview {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .manual-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #e8e8e8;
+      color: #555;
+    }
+
+    .manual-badge.green  { background: #eafaea; color: #2d7a2d; }
+    .manual-badge.yellow { background: #fff8e0; color: #8a6000; }
+
+    #saveMsg { font-size: 12px; color: #2d7a2d; margin-top: 6px; min-height: 16px; }
+
+    /* ── Legend ─────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-dot.green  { background: #2d7a2d; }
+    .legend-dot.yellow { background: #c8a000; }
+    .legend-dot.purple { background: #5b3fc8; }
+
+    /* ── History table ──────────────────────────────────────── */
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .history-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    th {
+      background: #1a1a1a;
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    tr:hover td { background: #f5f5f5; }
+
+    .empty-state { color: #aaa; text-align: center; padding: 20px; }
+
+    td.green  { color: #2d7a2d; font-weight: 700; background: #eafaea; white-space: nowrap; }
+    td.yellow { color: #8a6000; font-weight: 700; background: #fff8e0; white-space: nowrap; }
+
+    .summary-cell {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #555;
+      font-style: italic;
+      font-size: 12px;
+      cursor: help;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>StockValueSense <span class="version-badge">V1</span></h1>
+    <p class="subtitle">Enter a ticker to evaluate its value metrics</p>
+
+    <div class="lookup-row">
+      <input type="text" id="tickerInput" placeholder="e.g. AAPL" maxlength="10">
+      <button class="btn" id="lookupBtn">Evaluate</button>
+    </div>
+
+    <div id="statusMsg"></div>
+
+    <!-- Stock metrics card -->
+    <div class="stock-card" id="stockCard">
+      <div class="card-header">
+        <div class="card-ticker" id="cardTicker"></div>
+        <div class="card-name"   id="cardName"></div>
+        <div class="card-date"   id="cardDate"></div>
+      </div>
+      <div class="metrics-grid" id="metricsGrid"></div>
+    </div>
+
+    <!-- AI Summary trigger -->
+    <div class="ai-trigger" id="aiTrigger">
+      <button class="btn btn-ai" id="aiSummaryBtn">🤖 Get AI Summary</button>
+    </div>
+
+    <!-- AI Summary box -->
+    <div class="ai-summary-box" id="aiSummaryBox">
+      <div class="ai-summary-header">
+        <span class="ai-summary-label">🤖 AI Summary</span>
+        <span class="ai-summary-ticker" id="aiSummaryTicker"></span>
+      </div>
+      <div class="ai-summary-text" id="aiSummaryText"></div>
+    </div>
+
+    <!-- Manual ratings section -->
+    <div class="manual-section" id="manualSection">
+      <h3>📝 Add Your Own Ratings (optional)</h3>
+      <div class="manual-fields">
+        <div class="manual-field">
+          <label>Tip Ranks Rating</label>
+          <input type="number" id="tipRanksInput" min="1" max="10" step="0.1" placeholder="1–10">
+          <span class="hint">Green if ≥ 8</span>
+        </div>
+        <div class="manual-field">
+          <label>Morningstar Rating</label>
+          <input type="number" id="morningstarInput" min="1" max="5" step="1" placeholder="1–5 ★">
+          <span class="hint">Green if ≥ 4 stars</span>
+        </div>
+        <div>
+          <button class="btn" id="saveRatingsBtn">Save Ratings</button>
+        </div>
+      </div>
+      <div class="manual-preview" id="manualPreview"></div>
+      <div id="saveMsg"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot green"></div> Attractive value</div>
+      <div class="legend-item"><div class="legend-dot yellow"></div> Caution — high valuation</div>
+      <div class="legend-item"><div class="legend-dot purple"></div> AI summary</div>
+    </div>
+
+    <!-- History table -->
+    <div class="history-header">
+      <div class="history-title">Evaluation History</div>
+      <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Ticker</th>
+            <th>Price</th>
+            <th>52W High</th>
+            <th>52W Low</th>
+            <th>P/E</th>
+            <th>Book Value</th>
+            <th>P/B</th>
+            <th>PEG</th>
+            <th>EV/EBITDA</th>
+            <th>Analyst Rating</th>
+            <th>Div Yield</th>
+            <th>Tip Ranks</th>
+            <th>Morningstar ★</th>
+            <th>AI Summary</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr><td colspan="15" class="empty-state">No evaluations yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentTicker = null
+    let currentStock  = null
+
+    // ── Tooltip definitions ────────────────────────────────────────────────────
+    const INFO = {
+      pe: {
+        title: 'P/E Ratio (Price-to-Earnings)',
+        text:  'How much investors pay per $1 of earnings. Lower may indicate better value. Green < 20, Yellow > 40.'
+      },
+      pb: {
+        title: 'P/B Ratio (Price-to-Book)',
+        text:  'Stock price relative to the company\'s book (net asset) value per share. Green < 3, Yellow > 10.'
+      },
+      peg: {
+        title: 'PEG Ratio (Price/Earnings-to-Growth)',
+        text:  'P/E ratio divided by the earnings growth rate. A PEG below 1 suggests the stock may be undervalued relative to its growth. Highlighted green when PEG < 1.'
+      },
+      evEbitda: {
+        title: 'EV/EBITDA (Enterprise Value to EBITDA)',
+        text:  'Compares the total value of a company (including debt) to its operating earnings before interest, taxes, depreciation & amortization. A lower ratio generally means cheaper valuation. Highlighted green when below 8.'
+      },
+      analyst: {
+        title: 'Analyst Rating',
+        text:  'Consensus rating from Wall Street analysts based on recent Buy/Hold/Sell recommendations from Finnhub data.'
+      },
+      div: {
+        title: 'Dividend Yield',
+        text:  'Annual dividend paid as a percentage of the current stock price. A higher yield can indicate income potential or a falling stock price.'
+      }
+    }
+
+    // ── Info popup toggle ─────────────────────────────────────────────────────
+    // Each metric tile has a button; clicking it toggles the popup
+    function setupInfoBtn(btnId, popupId) {
+      const btn   = document.getElementById(btnId)
+      const popup = document.getElementById(popupId)
+      if (!btn || !popup) return
+
+      btn.addEventListener('click', e => {
+        e.stopPropagation()
+        // Close all other popups first
+        document.querySelectorAll('.info-popup').forEach(p => {
+          if (p !== popup) p.classList.remove('visible')
+        })
+        popup.classList.toggle('visible')
+      })
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.info-popup').forEach(p => p.classList.remove('visible'))
+    })
+
+    // ── Format helpers ─────────────────────────────────────────────────────────
+    function fmt(v, digits = 2) {
+      return v != null ? parseFloat(v).toFixed(digits) : 'N/A'
+    }
+
+    function fmtPE(pe) {
+      if (pe == null) return '<span style="color:#aaa">N/A</span>'
+      const v = parseFloat(pe)
+      if (v < 20)  return `<span class="metric-value green">${v.toFixed(1)}x</span>`
+      if (v > 40)  return `<span class="metric-value yellow">${v.toFixed(1)}x</span>`
+      return `<span class="metric-value">${v.toFixed(1)}x</span>`
+    }
+
+    function fmtPB(pb) {
+      if (pb == null) return '<span style="color:#aaa">N/A</span>'
+      const v = parseFloat(pb)
+      if (v < 3)  return `<span class="metric-value green">${v.toFixed(2)}x</span>`
+      if (v > 10) return `<span class="metric-value yellow">${v.toFixed(2)}x</span>`
+      return `<span class="metric-value">${v.toFixed(2)}x</span>`
+    }
+
+    function fmtPEG(peg) {
+      if (peg == null) return '<span style="color:#aaa">N/A</span>'
+      const v = parseFloat(peg)
+      if (v < 1) return `<span class="metric-value green">${v.toFixed(2)}</span>`
+      return `<span class="metric-value">${v.toFixed(2)}</span>`
+    }
+
+    function fmtEVEBITDA(ev) {
+      if (ev == null) return '<span style="color:#aaa">N/A</span>'
+      const v = parseFloat(ev)
+      if (v < 8) return `<span class="metric-value green">${v.toFixed(2)}x</span>`
+      return `<span class="metric-value">${v.toFixed(2)}x</span>`
+    }
+
+    function fmtAnalyst(rating) {
+      if (!rating) return '<span style="color:#aaa">N/A</span>'
+      const r     = String(rating)
+      const color = r.includes('Strong Buy') || r.includes('1 -') || r.includes('2 -') ? '#2d7a2d'
+                  : r.includes('4 -') || r.includes('Sell')                             ? '#a32d2d'
+                  : '#8a6000'
+      return `<span style="color:${color}; font-weight:600">${r}</span>`
+    }
+
+    // ── 52W Range bar ──────────────────────────────────────────────────────────
+    function rangeBar52W(price, low, high) {
+      if (!price || !low || !high || high <= low) {
+        return '<span style="color:#aaa;font-size:13px">N/A</span>'
+      }
+      const pct      = Math.max(0, Math.min(100, ((price - low) / (high - low)) * 100))
+      const dotColor = pct <= 40 ? '#2d7a2d' : '#1a1a1a'
+      return `
+        <div class="range-bar-wrap">
+          <div class="range-end-label">$${parseFloat(low).toFixed(2)}<br><span style="font-size:10px;color:#aaa">52W Low</span></div>
+          <div class="range-track-wrap">
+            <div class="range-track">
+              <div class="range-fill" style="width:${pct}%"></div>
+              <div class="range-dot" style="left:${pct}%;background:${dotColor}">
+                <div class="range-price-label">$${parseFloat(price).toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="range-end-label right">$${parseFloat(high).toFixed(2)}<br><span style="font-size:10px;color:#aaa">52W High</span></div>
+        </div>
+      `
+    }
+
+    // ── Build an info button + popup HTML ──────────────────────────────────────
+    function infoHtml(key, id) {
+      const def = INFO[key]
+      if (!def) return ''
+      return `<button class="info-btn" id="ib-${id}" title="${def.title}">i</button>
+              <div class="info-popup" id="ip-${id}">
+                <strong>${def.title}</strong>${def.text}
+              </div>`
+    }
+
+    // ── Render stock card ──────────────────────────────────────────────────────
+    function renderCard(stock) {
+      document.getElementById('cardTicker').textContent = stock.ticker
+      document.getElementById('cardName').textContent   = stock.name || ''
+      document.getElementById('cardDate').textContent   = new Date().toLocaleDateString('en-US')
+      document.getElementById('stockCard').style.display = 'block'
+
+      const grid = document.getElementById('metricsGrid')
+      grid.innerHTML = `
+        <div class="metric">
+          <div class="metric-label">Price</div>
+          <div class="metric-value">$${fmt(stock.price)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">P/E Ratio ${infoHtml('pe','pe')}</div>
+          <div>${fmtPE(stock.peRatio)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Book Value / Share</div>
+          <div class="metric-value">$${fmt(stock.bookValue)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">P/B Ratio ${infoHtml('pb','pb')}</div>
+          <div>${fmtPB(stock.pbRatio)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">PEG Ratio ${infoHtml('peg','peg')}</div>
+          <div>${fmtPEG(stock.pegRatio)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">EV / EBITDA ${infoHtml('evEbitda','ev')}</div>
+          <div>${fmtEVEBITDA(stock.evEbitda)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Analyst Rating ${infoHtml('analyst','analyst')}</div>
+          <div style="font-size:13px;font-weight:600;margin-top:4px">${fmtAnalyst(stock.analystRating)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Div Yield ${infoHtml('div','div')}</div>
+          <div class="metric-value">${stock.dividendYield != null ? stock.dividendYield.toFixed(2) + '%' : 'N/A'}</div>
+        </div>
+        <div class="metric full-width">
+          <div class="metric-label">52-Week Price Range</div>
+          ${rangeBar52W(stock.price, stock.week52Low, stock.week52High)}
+        </div>
+      `
+
+      // Wire up info buttons after inserting HTML
+      ;['pe','pb','peg','ev','analyst','div'].forEach(id => setupInfoBtn(`ib-${id}`, `ip-${id}`))
+    }
+
+    // ── Manual rating preview ──────────────────────────────────────────────────
+    function updateManualPreview() {
+      const tr      = parseFloat(document.getElementById('tipRanksInput').value)
+      const ms      = parseInt(document.getElementById('morningstarInput').value)
+      const preview = document.getElementById('manualPreview')
+      let html = ''
+
+      if (!isNaN(tr)) {
+        const cls = tr >= 8 ? 'green' : ''
+        html += `<div class="manual-badge ${cls}">Tip Ranks: ${tr} ${tr >= 8 ? '✅' : ''}</div>`
+      }
+      if (!isNaN(ms) && ms >= 1 && ms <= 5) {
+        const stars = '★'.repeat(ms) + '☆'.repeat(5 - ms)
+        const cls   = ms >= 4 ? 'green' : ''
+        html += `<div class="manual-badge ${cls}">Morningstar: ${stars} ${ms >= 4 ? '✅' : ''}</div>`
+      }
+
+      preview.innerHTML = html
+    }
+
+    document.getElementById('tipRanksInput').addEventListener('input', updateManualPreview)
+    document.getElementById('morningstarInput').addEventListener('input', updateManualPreview)
+
+    // ── Lookup stock ───────────────────────────────────────────────────────────
+    document.getElementById('lookupBtn').addEventListener('click', async () => {
+      const ticker = document.getElementById('tickerInput').value.trim().toUpperCase()
+      if (!ticker) return
+
+      currentTicker = ticker
+      currentStock  = null
+      const btn = document.getElementById('lookupBtn')
+      const msg = document.getElementById('statusMsg')
+
+      btn.disabled    = true
+      msg.textContent = 'Fetching data...'
+
+      document.getElementById('stockCard').style.display     = 'none'
+      document.getElementById('aiTrigger').style.display     = 'none'
+      document.getElementById('aiSummaryBox').style.display  = 'none'
+      document.getElementById('manualSection').style.display = 'none'
+      document.getElementById('saveMsg').textContent         = ''
+      document.getElementById('tipRanksInput').value         = ''
+      document.getElementById('morningstarInput').value      = ''
+      document.getElementById('manualPreview').innerHTML     = ''
+      document.getElementById('aiSummaryText').textContent   = ''
+
+      try {
+        const res  = await fetch('/.netlify/functions/stock-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker })
+        })
+        const data = await res.json()
+
+        if (!res.ok || data.error) {
+          msg.textContent = '❌ ' + (data.error || 'Error fetching stock')
+          btn.disabled = false
+          return
+        }
+
+        currentStock = data.stock
+        renderCard(data.stock)
+        document.getElementById('aiTrigger').style.display     = 'block'
+        document.getElementById('manualSection').style.display = 'block'
+        msg.textContent = '✅ Data fetched and saved to sheet.'
+        loadHistory()
+
+      } catch(e) {
+        msg.textContent = '❌ Network error: ' + e.message
+      }
+
+      btn.disabled = false
+    })
+
+    // ── Get AI Summary ─────────────────────────────────────────────────────────
+    document.getElementById('aiSummaryBtn').addEventListener('click', async () => {
+      if (!currentStock) return
+
+      const btn    = document.getElementById('aiSummaryBtn')
+      const box    = document.getElementById('aiSummaryBox')
+      const text   = document.getElementById('aiSummaryText')
+      const ticker = document.getElementById('aiSummaryTicker')
+
+      btn.disabled       = true
+      btn.textContent    = '⏳ Generating...'
+      box.style.display  = 'block'
+      ticker.textContent = currentTicker
+      text.innerHTML     = '<span class="ai-loading">Analyzing stock data, please wait...</span>'
+
+      try {
+        const res  = await fetch('/.netlify/functions/stock-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'aiSummary', stock: currentStock })
+        })
+        const data = await res.json()
+
+        if (!res.ok || data.error) {
+          text.textContent = '❌ ' + (data.error || 'Error generating summary')
+          btn.disabled     = false
+          btn.textContent  = '🤖 Get AI Summary'
+          return
+        }
+
+        text.textContent = data.summary
+
+        await fetch('/.netlify/functions/stock-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'saveAISummary', ticker: currentTicker, aiSummary: data.summary })
+        })
+
+        loadHistory()
+
+      } catch(e) {
+        text.textContent = '❌ Network error: ' + e.message
+      }
+
+      btn.disabled    = false
+      btn.textContent = '🤖 Get AI Summary'
+    })
+
+    // ── Save manual ratings ────────────────────────────────────────────────────
+    document.getElementById('saveRatingsBtn').addEventListener('click', async () => {
+      if (!currentTicker) return
+
+      const tipRanks    = document.getElementById('tipRanksInput').value.trim()
+      const morningstar = document.getElementById('morningstarInput').value.trim()
+      const saveBtn     = document.getElementById('saveRatingsBtn')
+      const saveMsg     = document.getElementById('saveMsg')
+
+      saveBtn.disabled    = true
+      saveMsg.textContent = 'Saving...'
+
+      try {
+        const res  = await fetch('/.netlify/functions/stock-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action:      'saveRatings',
+            ticker:      currentTicker,
+            tipRanks:    tipRanks    !== '' ? parseFloat(tipRanks)  : null,
+            morningstar: morningstar !== '' ? parseInt(morningstar) : null
+          })
+        })
+        const data = await res.json()
+
+        if (!res.ok || data.error) {
+          saveMsg.style.color = '#a32d2d'
+          saveMsg.textContent = '❌ ' + (data.error || 'Error saving ratings')
+        } else {
+          saveMsg.style.color = '#2d7a2d'
+          saveMsg.textContent = '✅ Ratings saved!'
+          loadHistory()
+        }
+      } catch(e) {
+        saveMsg.style.color = '#a32d2d'
+        saveMsg.textContent = '❌ Network error: ' + e.message
+      }
+
+      saveBtn.disabled = false
+    })
+
+    // ── Load history ───────────────────────────────────────────────────────────
+    // Column order in sheet: 0=Date 1=Ticker 2=Price 3=52WH 4=52WL 5=PE 6=BV 7=PB 8=PEG 9=EV/EBITDA 10=Analyst 11=DivYield 12=TipRanks 13=Morningstar 14=AISummary
+    async function loadHistory() {
+      try {
+        const res  = await fetch('/.netlify/functions/stock-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'history' })
+        })
+        const data = await res.json()
+        const rows = data.rows || []
+
+        const tbody    = document.getElementById('historyBody')
+        const dataRows = rows.filter((r, i) => i > 0 && r[1] && r[1] !== 'Ticker')
+
+        if (dataRows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="15" class="empty-state">No evaluations yet.</td></tr>'
+          return
+        }
+
+        tbody.innerHTML = dataRows.reverse().map(r => {
+          const pe    = parseFloat(r[5])
+          const pb    = parseFloat(r[7])
+          const peg   = parseFloat(r[8])
+          const ev    = parseFloat(r[9])
+          const tr    = parseFloat(r[12])
+          const ms    = parseInt(r[13])
+
+          const peCls  = isNaN(pe)  ? '' : pe < 20  ? 'green' : pe > 40 ? 'yellow' : ''
+          const pbCls  = isNaN(pb)  ? '' : pb < 3   ? 'green' : pb > 10 ? 'yellow' : ''
+          const pegCls = isNaN(peg) ? '' : peg < 1  ? 'green' : ''
+          const evCls  = isNaN(ev)  ? '' : ev < 8   ? 'green' : ''
+          const trCls  = isNaN(tr)  ? '' : tr >= 8  ? 'green' : ''
+          const msCls  = isNaN(ms)  ? '' : ms >= 4  ? 'green' : ''
+
+          const msStars = (!isNaN(ms) && ms >= 1) ? '★'.repeat(ms) + '☆'.repeat(5 - ms) : (r[13] || '')
+          const aiText  = r[14] || ''
+          const aiShort = aiText.length > 60 ? aiText.slice(0, 60) + '…' : aiText
+
+          return `<tr>
+            <td>${r[0]  || ''}</td>
+            <td><strong>${r[1] || ''}</strong></td>
+            <td>$${r[2] || ''}</td>
+            <td>${r[3]  || ''}</td>
+            <td>${r[4]  || ''}</td>
+            <td class="${peCls}">${r[5]  || ''}</td>
+            <td>${r[6]  || ''}</td>
+            <td class="${pbCls}">${r[7]  || ''}</td>
+            <td class="${pegCls}">${r[8] || ''}</td>
+            <td class="${evCls}">${r[9]  || ''}</td>
+            <td>${r[10] || ''}</td>
+            <td>${r[11] || ''}</td>
+            <td class="${trCls}">${r[12] || ''}</td>
+            <td class="${msCls}">${msStars}</td>
+            <td class="summary-cell" title="${aiText.replace(/"/g, '&quot;')}">${aiShort}</td>
+          </tr>`
+        }).join('')
+
+      } catch(e) {
+        console.error('History load error:', e)
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadHistory)
+    document.getElementById('tickerInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('lookupBtn').click()
+    })
+
+    loadHistory()
+  </script>
+</body>
+</html>
