@@ -441,6 +441,24 @@
       border-bottom: 1px solid #e8e8e8;
       white-space: nowrap;
     }
+    .ai-section {
+      margin-bottom: 10px;
+    }
+
+    .ai-section:last-child { margin-bottom: 0; }
+
+    .ai-section-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .ai-section-label.about { color: #4a90d9; }
+    .ai-section-label.pos   { color: #2d7a2d; }
+    .ai-section-label.watch { color: #c07000; }
   </style>
 </head>
 <body>
@@ -832,7 +850,12 @@
           return
         }
 
-        text.textContent = data.summary
+       const formatted = data.summary
+          .replace(/^ABOUT:/m,     '<div class="ai-section"><span class="ai-section-label about">🏢 About</span>')
+          .replace(/^POSITIVES:/m, '</div><div class="ai-section"><span class="ai-section-label pos">✅ Positives</span>')
+          .replace(/^WATCHLIST:/m, '</div><div class="ai-section"><span class="ai-section-label watch">⚠️ Watchlist</span>')
+          + '</div>'
+        text.innerHTML = formatted
 
         await fetch('/.netlify/functions/stock-lookup', {
           method: 'POST',

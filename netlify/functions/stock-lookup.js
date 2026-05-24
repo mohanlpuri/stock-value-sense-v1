@@ -254,7 +254,30 @@ async function fetchStock(ticker) {
 
 // ─── Generate AI summary via Anthropic API ────────────────────────────────────
 async function generateAISummary(stock) {
-  const prompt = `You are a concise stock analyst. Given the following data for ${stock.ticker} (${stock.name}), write a 3-4 sentence summary covering: what the company does, whether the valuation looks attractive or expensive, and any notable positives or concerns. Be factual and balanced. Do not give buy/sell advice.
+ const prompt = `You are a concise stock analyst. Given the following data for ${stock.ticker} (${stock.name}), write a structured analysis in exactly 3 sections with these exact labels and format:
+
+ABOUT: [2-3 sentences describing what the company does, its business model, and sector.]
+
+POSITIVES: [2-3 sentences on what is going well — strong metrics, growth, valuation advantages, analyst sentiment, dividend, or competitive position.]
+
+WATCHLIST: [2-3 sentences on concerns or risks — high valuation, weak metrics, sector headwinds, or anything an investor should monitor closely.]
+
+Be factual and balanced. Do not give buy/sell advice. Use only the data provided.
+
+Stock data:
+- Ticker: ${stock.ticker}
+- Company: ${stock.name}
+- Sector: ${stock.sector || 'Unknown'}
+- Price: $${stock.price != null ? stock.price.toFixed(2) : 'N/A'}
+- 52W High: $${stock.week52High != null ? stock.week52High.toFixed(2) : 'N/A'}
+- 52W Low: $${stock.week52Low != null ? stock.week52Low.toFixed(2) : 'N/A'}
+- P/E Ratio: ${stock.peRatio != null ? stock.peRatio.toFixed(1) : 'N/A'}
+- Book Value/Share: $${stock.bookValue != null ? stock.bookValue.toFixed(2) : 'N/A'}
+- P/B Ratio: ${stock.pbRatio != null ? stock.pbRatio.toFixed(2) : 'N/A'}
+- PEG Ratio: ${stock.pegRatio != null ? stock.pegRatio.toFixed(2) : 'N/A'}
+- EV/EBITDA: ${stock.evEbitda != null ? stock.evEbitda.toFixed(2) : 'N/A'}
+- Analyst Rating: ${stock.analystRating || 'N/A'}
+- Dividend Yield: ${stock.dividendYield != null ? stock.dividendYield.toFixed(2) + '%' : 'N/A'}`const prompt = `You are a concise stock analyst. Given the following data for ${stock.ticker} (${stock.name}), write a 3-4 sentence summary covering: what the company does, whether the valuation looks attractive or expensive, and any notable positives or concerns. Be factual and balanced. Do not give buy/sell advice.
 
 Stock data:
 - Ticker: ${stock.ticker}
@@ -282,7 +305,7 @@ Write only the summary paragraph, no headings or bullet points.`
     },
     body: JSON.stringify({
       model:      'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: 500,
       messages:   [{ role: 'user', content: prompt }]
     })
   })
