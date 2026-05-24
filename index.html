@@ -189,17 +189,15 @@
 
     .info-popup {
       display: none;
-      position: absolute;
-      left: 0;
-      top: 100%;
-      z-index: 100;
+      position: fixed;
+      z-index: 9999;
       background: #1a1a1a;
       color: white;
       font-size: 12px;
       line-height: 1.5;
       padding: 10px 13px;
       border-radius: 8px;
-      width: 240px;
+      width: 260px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.25);
       pointer-events: none;
     }
@@ -581,17 +579,19 @@
 
     // ── Info popup toggle ─────────────────────────────────────────────────────
     // Each metric tile has a button; clicking it toggles the popup
-    function setupInfoBtn(btnId, popupId) {
+   function setupInfoBtn(btnId, popupId) {
       const btn   = document.getElementById(btnId)
       const popup = document.getElementById(popupId)
       if (!btn || !popup) return
 
       btn.addEventListener('click', e => {
         e.stopPropagation()
-        // Close all other popups first
         document.querySelectorAll('.info-popup').forEach(p => {
           if (p !== popup) p.classList.remove('visible')
         })
+        const rect = btn.getBoundingClientRect()
+        popup.style.top  = (rect.bottom + 6) + 'px'
+        popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'
         popup.classList.toggle('visible')
       })
     }
