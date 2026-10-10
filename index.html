@@ -542,6 +542,10 @@
    <div class="history-header">
       <div class="history-title">Evaluation History</div>
       <div style="display:flex;gap:8px">
+         
+        <select id="tickerFilter" style="padding:6px 10px;border:2px solid #1a1a1a;border-radius:8px;font-size:14px;font-weight:600">
+          <option value="">All stocks</option>
+        </select>        
         <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
         <button class="btn btn-outline" id="downloadBtn">⬇ Download CSV</button>
       </div>
@@ -974,7 +978,7 @@
           const aiText  = r[14] || ''
           const aiShort = aiText.length > 60 ? aiText.slice(0, 60) + '…' : aiText
 
-          return `<tr>
+          return `<tr data-ticker="${r[1] || ''}">
             <td>${r[0]  || ''}</td>
             <td><strong>${r[1] || ''}</strong></td>
             <td>$${r[2] || ''}</td>
@@ -992,11 +996,34 @@
             <td class="summary-cell" title="${aiText.replace(/"/g, '&quot;')}">${aiShort}</td>
           </tr>`
         }).join('')
+                buildTickerFilter(dataRows)
 
       } catch(e) {
         console.error('History load error:', e)
       }
     }
+
+    
+    // ── Ticker filter for history table ────────────────────────────────────────
+    function buildTickerFilter(dataRows) {
+      const select  = document.getElementById('tickerFilter')
+      const current = select.value
+      const tickers = [...new Set(dataRows.map(r => r[1]))].sort()
+      select.innerHTML = '<option value="">All stocks</option>' +
+        tickers.map(t => `<option value="${t}">${t}</option>`).join('')
+      if (tickers.includes(current)) select.value = current
+      applyTickerFilter()
+    }
+
+    function applyTickerFilter() {
+      const pick = document.getElementById('tickerFilter').value
+      document.querySelectorAll('#historyBody tr').forEach(tr => {
+        const t = tr.dataset.ticker
+        tr.style.display = (!pick || !t || t === pick) ? '' : 'none'
+      })
+    }
+
+    document.getElementById('tickerFilter').addEventListener('change', applyTickerFilter)
 
    document.getElementById('downloadBtn').addEventListener('click', () => {
       const rows = document.querySelectorAll('#historyBody tr')
@@ -1008,6 +1035,7 @@
       rows.forEach(row => {
         const cells = row.querySelectorAll('td')
         if (!cells.length) return
+                  if (row.style.display === 'none') return
         const rowData = Array.from(cells).map(td => {
           const text = td.innerText.replace(/"/g, '""')
           return `"${text}"`
