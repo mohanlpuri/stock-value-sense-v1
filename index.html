@@ -511,7 +511,10 @@
       <h3>📝 Add Your Own Ratings (optional)</h3>
       <div class="manual-fields">
         <div class="manual-field">
-          <label>Tip Ranks Rating</label>
+          <label>Tip Ranks Rating
+             <a id="tipRanksLink" href="https://www.tipranks.com" target="_blank" rel="noopener"
+              style="font-size:12px;margin-left:6px">Look up ↗</a>
+          </label>
           <input type="number" id="tipRanksInput" min="1" max="10" step="0.1" placeholder="1–10">
           <span class="hint">Green if ≥ 8</span>
         </div>
@@ -709,6 +712,7 @@
       document.getElementById('cardTicker').textContent = stock.ticker
       document.getElementById('cardName').textContent   = stock.name || ''
       document.getElementById('cardDate').textContent   = new Date().toLocaleDateString('en-US')
+            document.getElementById('tipRanksLink').href = `https://www.tipranks.com/stocks/${stock.ticker.toLowerCase()}`
       document.getElementById('stockCard').style.display = 'block'
 
       const grid = document.getElementById('metricsGrid')
